@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f7f8fc">
+    <title>{% if searched %}Search results · {% endif %}RoleScout — a smarter job search</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #182230;
+            --muted: #647184;
+            --line: #e5e9f0;
+            --paper: #fff;
+            --canvas: #f7f8fc;
+            --blue: #315ce8;
+            --blue-dark: #2448c8;
+            --blue-soft: #edf2ff;
+            --green: #13855b;
+            --shadow: 0 12px 35px rgba(28, 42, 69, .07);
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            background: var(--canvas);
+            color: var(--ink);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 15px;
+            line-height: 1.55;
+        }
+        a { color: inherit; }
+        button, input { font: inherit; }
+        .wrap { width: min(1160px, calc(100% - 40px)); margin: 0 auto; }
+        .topbar { background: rgba(255, 255, 255, .92); border-bottom: 1px solid var(--line); }
+        .nav { height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+        .brand { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; font-weight: 780; letter-spacing: -.045em; font-size: 20px; }
+        .brand-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px; background: var(--blue); color: white; font-size: 17px; letter-spacing: 0; }
+        .brand span:last-child span { color: var(--blue); }
+        .nav-links { display: flex; align-items: center; gap: 27px; }
+        .nav-links a { text-decoration: none; color: #596579; font-size: 13px; font-weight: 650; white-space: nowrap; }
+        .nav-links a:hover, .text-link:hover { color: var(--blue); }
+        .nav-cta { background: var(--blue); color: #fff !important; padding: 10px 15px; border-radius: 9px; }
+        .hero { padding: 60px 0 34px; }
+        .hero-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(265px, .8fr); gap: 38px; align-items: center; }
+        .eyebrow { display: inline-flex; gap: 8px; align-items: center; color: var(--blue); font-weight: 750; text-transform: uppercase; letter-spacing: .095em; font-size: 11px; }
+        .eyebrow-dot { width: 7px; height: 7px; border-radius: 99px; background: #28b17b; }
+        h1 { max-width: 690px; margin: 12px 0 15px; font-size: clamp(36px, 5vw, 55px); line-height: 1.08; letter-spacing: -.055em; }
+        h1 em { color: var(--blue); font-style: normal; }
+        .hero-copy { max-width: 590px; color: var(--muted); font-size: 16px; margin: 0; }
+        .hero-note { display: flex; gap: 10px; align-items: flex-start; padding: 17px 18px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); color: #536176; font-size: 13px; }
+        .hero-note strong { display: block; color: var(--ink); margin-bottom: 2px; }
+        .note-icon { flex: 0 0 34px; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); font-weight: 800; }
+        main { padding-bottom: 56px; }
+        .search-card, .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); }
+        .search-card { padding: 26px; scroll-margin-top: 20px; }
+        .section-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+        .section-heading h2, .panel-heading h2 { margin: 0; font-size: 20px; letter-spacing: -.035em; }
+        .section-heading p, .panel-heading p { color: var(--muted); margin: 4px 0 0; font-size: 13px; }
+        .secure-label { color: #798596; font-size: 11px; padding-top: 4px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .field { min-width: 0; }
+        .field.full { grid-column: 1 / -1; }
+        label, .legend { display: block; margin-bottom: 7px; font-size: 12px; font-weight: 730; color: #354257; }
+        .optional { color: #8b96a6; font-weight: 500; }
+        .input { display: block; width: 100%; min-height: 45px; padding: 10px 13px; border: 1px solid #d9dfe9; border-radius: 9px; outline: none; background: #fff; color: var(--ink); }
+        .input::placeholder { color: #9aa4b2; }
+        .input:focus { border-color: #7894f3; box-shadow: 0 0 0 3px rgba(49, 92, 232, .11); }
+        .hint { color: #7d8898; font-size: 11px; margin: 6px 0 0; }
+        .choices { display: flex; flex-wrap: wrap; gap: 8px; }
+        .choice { position: relative; }
+        .choice input { position: absolute; opacity: 0; pointer-events: none; }
+        .choice span { display: inline-flex; align-items: center; border: 1px solid #dfe4ec; padding: 7px 11px; border-radius: 8px; color: #586477; background: #fff; font-size: 12px; cursor: pointer; }
+        .choice input:checked + span { border-color: #a8b9fb; background: var(--blue-soft); color: #284fcf; font-weight: 700; }
+        .choice input:focus-visible + span { outline: 3px solid rgba(49, 92, 232, .25); outline-offset: 2px; }
+        details.advanced { border-top: 1px solid #edf0f4; margin-top: 19px; padding-top: 15px; }
+        details.advanced summary { width: fit-content; cursor: pointer; color: #39465a; font-weight: 700; font-size: 12px; }
+        .advanced-content { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; padding-top: 17px; }
+        .submit-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid #edf0f4; margin-top: 20px; padding-top: 18px; }
+        .submit-note { color: #7a8594; font-size: 11px; }
+        .primary-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; border: 0; background: var(--blue); color: #fff; border-radius: 9px; padding: 12px 19px; font-weight: 730; cursor: pointer; box-shadow: 0 5px 12px rgba(49, 92, 232, .18); }
+        .primary-btn:hover { background: var(--blue-dark); }
+        .primary-btn:focus-visible, a:focus-visible { outline: 3px solid rgba(49, 92, 232, .4); outline-offset: 3px; }
+        .alert { margin: 18px 0; padding: 13px 15px; border-radius: 10px; font-size: 13px; }
+        .alert.error { color: #9d2c2c; border: 1px solid #f4cccc; background: #fff5f5; }
+        .results { padding-top: 42px; scroll-margin-top: 20px; }
+        .results-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 17px; }
+        .results-top h2 { margin: 0; font-size: 25px; letter-spacing: -.045em; }
+        .results-top p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+        .result-count { display: inline-flex; border: 1px solid #d7e1ff; background: var(--blue-soft); color: #2c4fc6; border-radius: 99px; padding: 6px 11px; font-size: 12px; font-weight: 750; }
+        .source-errors { margin: 0 0 16px; padding: 15px 17px; border: 1px solid #f0dfb2; background: #fffaf0; border-radius: 12px; }
+        .source-errors h3 { font-size: 13px; margin: 0 0 7px; }
+        .source-errors ul { color: #725d34; font-size: 12px; margin: 0; padding-left: 18px; }
+        .source-errors li + li { margin-top: 5px; }
+        .job-list { display: grid; gap: 12px; }
+        .job-card { padding: 20px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 5px 17px rgba(28, 42, 69, .035); }
+        .job-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+        .job-title { font-size: 18px; line-height: 1.3; letter-spacing: -.025em; margin: 0; }
+        .job-company { margin: 4px 0 0; font-size: 13px; color: #596579; font-weight: 600; }
+        .apply-btn { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 7px; text-decoration: none; padding: 9px 12px; border: 1px solid #d5defb; background: #f6f8ff; border-radius: 8px; color: #2d50c8; font-size: 12px; font-weight: 750; }
+        .apply-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+        .meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 13px; }
+        .meta span, .tag { display: inline-flex; align-items: center; border-radius: 6px; padding: 4px 8px; background: #f2f4f8; color: #586477; font-size: 11px; }
+        .meta .signal { background: #eaf7f0; color: #17724f; }
+        .meta .salary { background: #f1edff; color: #6744ae; }
+        .job-description { color: #657184; margin: 13px 0 0; font-size: 12px; line-height: 1.65; }
+        .job-details { border-top: 1px solid #edf0f4; margin-top: 13px; padding-top: 12px; }
+        .job-details summary { cursor: pointer; width: fit-content; color: #45536a; font-size: 12px; font-weight: 680; }
+        .detail-content { padding-top: 12px; color: #606d80; font-size: 12px; }
+        .detail-content p { margin: 8px 0; }
+        .detail-content strong { color: #303c50; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+        .roadmap { color: #647184; margin: 5px 0 0; padding-left: 18px; }
+        .empty { text-align: center; padding: 34px 20px; background: #fff; border: 1px dashed #d6dce7; border-radius: 14px; }
+        .empty h3 { margin: 0 0 5px; font-size: 16px; }
+        .empty p { max-width: 560px; margin: 0 auto; color: var(--muted); font-size: 13px; }
+        .panel { padding: 23px; margin-top: 26px; scroll-margin-top: 20px; }
+        .panel-heading { margin-bottom: 17px; }
+        .guidance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+        .guidance-card { border: 1px solid var(--line); border-radius: 11px; padding: 15px; }
+        .guidance-card h3 { margin: 0 0 7px; font-size: 14px; }
+        .guidance-card p { margin: 0 0 10px; color: var(--muted); font-size: 11px; }
+        .guidance-card ul { margin: 0; padding-left: 17px; color: #586477; font-size: 11px; }
+        .guidance-card li + li { margin-top: 5px; }
+        .text-link { color: var(--blue); text-decoration: none; font-weight: 650; }
+        .disclaimer { color: #778294; font-size: 11px; margin: 15px 0 0; }
+        .sources { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .source-card { padding: 14px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; background: #fff; }
+        .source-card:hover { border-color: #b6c5fb; box-shadow: 0 5px 14px rgba(49, 92, 232, .08); }
+        .source-card strong { display: block; font-size: 12px; }
+        .source-card span { display: block; color: var(--muted); font-size: 10px; margin-top: 4px; }
+        footer { border-top: 1px solid var(--line); background: #fff; padding: 22px 0; color: #7b8696; font-size: 11px; }
+        .footer-row { display: flex; justify-content: space-between; gap: 18px; }
+        @media (max-width: 760px) {
+            .hero-grid { grid-template-columns: 1fr; gap: 22px; }
+            .hero { padding-top: 40px; }
+            .sources { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 560px) {
+            .wrap { width: min(100% - 26px, 1160px); }
+            .nav { height: 62px; }
+            .nav-links { gap: 13px; }
+            .nav-links a { font-size: 11px; }
+            .nav-links a:not(.nav-cta) { display: none; }
+            .hero { padding: 34px 0 24px; }
+            .hero-copy { font-size: 14px; }
+            .search-card, .panel { padding: 18px; border-radius: 13px; }
+            .form-grid, .advanced-content { grid-template-columns: 1fr; }
+            .field.full { grid-column: auto; }
+            .section-heading { display: block; }
+            .secure-label { display: block; margin-top: 7px; }
+            .submit-row { align-items: stretch; flex-direction: column; }
+            .primary-btn { width: 100%; }
+            .job-top { flex-direction: column; }
+            .footer-row { flex-direction: column; gap: 5px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <nav class="nav wrap" aria-label="Main navigation">
+            <a class="brand" href="#home" aria-label="RoleScout home">
+                <span class="brand-mark" aria-hidden="true">R</span>
+                <span>role<span>scout</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="#search">Find jobs</a>
+                <a href="#career-paths">Career paths</a>
+                <a href="#sources">Job sources</a>
+                <a class="nav-cta" href="#search">Start searching <span aria-hidden="true">→</span></a>
+            </div>
+        </nav>
+    </header>
+
+    <div id="home" class="wrap">
+        <section class="hero">
+            <div class="hero-grid">
+                <div>
+                    <div class="eyebrow"><span class="eyebrow-dot"></span> Your next opportunity starts here</div>
+                    <h1>Find work that fits <em>your skills.</em></h1>
+                    <p class="hero-copy">Search public job boards in one place. Compare real listings, see source-reported salary details, and discover practical next steps for your career.</p>
+                </div>
+                <aside class="hero-note">
+                    <span class="note-icon" aria-hidden="true">✓</span>
+                    <span><strong>Real listings. Clear signals.</strong>Results come directly from selected job sources. We never invent salary estimates or promise a match.</span>
+                </aside>
+            </div>
+        </section>
+
+        <main>
+            <section class="search-card" id="search" aria-labelledby="search-title">
+                <div class="section-heading">
+                    <div>
+                        <h2 id="search-title">Build your job search</h2>
+                        <p>Tell us what you do and where you want to work.</p>
+                    </div>
+                    <span class="secure-label">No account required · Search public listings</span>
+                </div>
+                <form action="/" method="post">
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="skills">Skills or job keywords <span aria-hidden="true">*</span></label>
+                            <input class="input" id="skills" name="skills" value="{{ form.skills }}" placeholder="e.g. Python, data analysis, product design" required>
+                            <p class="hint">Separate multiple skills with commas.</p>
+                        </div>
+                        <div class="field">
+                            <label for="locations">Preferred locations <span class="optional">(optional)</span></label>
+                            <input class="input" id="locations" name="locations" value="{{ form.locations }}" placeholder="e.g. Toronto, India, Remote">
+                            <p class="hint">Leave blank to search without a location filter.</p>
+                        </div>
+                        <div class="field full">
+                            <span class="legend">Choose job sources</span>
+                            <div class="choices">
+                                {% for portal in portals %}
+                                <label class="choice">
+                                    <input type="checkbox" name="portals" value="{{ portal }}" {% if portal in form.portals %}checked{% endif %}>
+                                    <span>{{ portal_labels[portal] }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <p class="hint">Remotive and Arbeitnow are public sources; other sources may need API credentials.</p>
+                        </div>
+                    </div>
+                    <details class="advanced" {% if form.job_types or form.experiences or form.migration_project %}open{% endif %}>
+                        <summary>Refine your search <span class="optional">· filters and project context</span></summary>
+                        <div class="advanced-content">
+                            <div class="field">
+                                <span class="legend">Job type</span>
+                                <div class="choices">
+                                    {% for value in job_types %}
+                                    <label class="choice">
+                                        <input type="checkbox" name="job_types" value="{{ value }}" {% if value in form.job_types %}checked{% endif %}>
+                                        <span>{{ value }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="field">
+                                <span class="legend">Experience level</span>
+                                <div class="choices">
+                                    {% for value in experience_levels %}
+                                    <label class="choice">
+                                        <input type="checkbox" name="experiences" value="{{ value }}" {% if value in form.experiences %}checked{% endif %}>
+                                        <span>{{ value }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="field full">
+                                <label for="migration_project">Project or career goal <span class="optional">(optional)</span></label>
+                                <input class="input" id="migration_project" name="migration_project" value="{{ form.migration_project }}" maxlength="300" placeholder="e.g. Moving a desktop app to a portable web platform">
+                                <p class="hint">Used to rank related listings. This text is sent to the job sources you select.</p>
+                            </div>
+                        </div>
+                    </details>
+                    <div class="submit-row">
+                        <span class="submit-note">Searches public job boards. Some sources may be temporarily unavailable.</span>
+                        <button class="primary-btn" type="submit">Search jobs <span aria-hidden="true">→</span></button>
+                    </div>
+                </form>
+            </section>
+
+            {% if error %}
+            <div class="alert error" role="alert">{{ error }}</div>
+            {% endif %}
+
+            {% if searched and not error %}
+            <section class="results" id="results" aria-labelledby="results-title">
+                <div class="results-top">
+                    <div>
+                        <h2 id="results-title">Your matching opportunities</h2>
+                        <p>
+                            {% if form.skills %}For {{ form.skills }}{% endif %}
+                            {% if locations %} · {{ locations | join(", ") }}{% endif %}
+                        </p>
+                    </div>
+                    <span class="result-count">{{ jobs | length }} listing{% if jobs | length != 1 %}s{% endif %}</span>
+                </div>
+
+                {% if provider_errors %}
+                <div class="source-errors" role="status">
+                    <h3>Some job sources could not be reached</h3>
+                    <ul>
+                        {% for portal, message in provider_errors.items() %}
+                        <li><strong>{{ portal_labels.get(portal, portal) }}:</strong> {{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if jobs %}
+                <div class="job-list">
+                    {% for job in jobs %}
+                    <article class="job-card">
+                        <div class="job-top">
+                            <div>
+                                <h3 class="job-title">{{ job.title }}</h3>
+                                <p class="job-company">{{ job.company }}</p>
+                            </div>
+                            {% if job.url %}
+                            <a class="apply-btn" href="{{ job.url }}" target="_blank" rel="noopener noreferrer">View listing <span aria-hidden="true">↗</span></a>
+                            {% endif %}
+                        </div>
+                        <div class="meta">
+                            <span>{{ job.location or "Location not specified" }}</span>
+                            <span>{{ portal_labels.get(job.portal, job.portal) }}</span>
+                            <span>{{ job.job_type }}</span>
+                            <span>{{ job.experience }} experience</span>
+                            {% if job.salary %}<span class="salary">{{ job.salary }} · source reported</span>{% endif %}
+                            {% if job.early_career_highlight %}<span class="signal">Early-career signal</span>{% endif %}
+                            {% if job.startup_signal %}<span class="signal">Startup signal</span>{% endif %}
+                        </div>
+                        {% if job.description %}
+                        <p class="job-description">{{ job.description | striptags | truncate(360, True, "…") }}</p>
+                        {% endif %}
+                        <details class="job-details">
+                            <summary>Skills, learning roadmap and details</summary>
+                            <div class="detail-content">
+                                {% if job.role_skills_found %}
+                                <p><strong>Skills mentioned:</strong></p>
+                                <div class="tag-list">{% for skill in job.role_skills_found %}<span class="tag">{{ skill }}</span>{% endfor %}</div>
+                                {% endif %}
+                                {% if job.potential_skill_gaps %}
+                                <p><strong>Potential skills to build:</strong> {{ job.potential_skill_gaps | join(", ") }}</p>
+                                {% endif %}
+                                {% if job.tags %}
+                                <p><strong>Source tags:</strong> {{ job.tags | join(", ") }}</p>
+                                {% endif %}
+                                {% if job.roadmap %}
+                                <p><strong>Suggested learning roadmap</strong></p>
+                                <ul class="roadmap">{% for step in job.roadmap %}<li>{{ step }}</li>{% endfor %}</ul>
+                                {% endif %}
+                                {% if job.salary_note %}<p class="disclaimer">{{ job.salary_note }}</p>{% endif %}
+                            </div>
+                        </details>
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty">
+                    <h3>No matching listings this time</h3>
+                    <p>
+                        {% if provider_errors %}The selected sources returned no matching listings or could not be reached. Try again later, broaden your location or keywords, or select another source.{% else %}Try broader skills or locations, remove a filter, or select more job sources.{% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </section>
+
+            {% if guidance %}
+            <section class="panel" id="career-paths" aria-labelledby="career-title">
+                <div class="panel-heading">
+                    <h2 id="career-title">Explore your next career step</h2>
+                    <p>Ideas based on your skills and retrieved listings, not a hiring or salary forecast.</p>
+                </div>
+                <div class="guidance-grid">
+                    {% for path in guidance.paths %}
+                    <article class="guidance-card">
+                        <h3>{{ path.field }}</h3>
+                        <p>{{ path.market_signal }}</p>
+                        <ul>
+                            {% for course in path.courses %}
+                            <li><a class="text-link" href="https://www.google.com/search?q={{ course | urlencode }}" target="_blank" rel="noopener noreferrer">{{ course }}</a></li>
+                            {% endfor %}
+                            {% for community in path.mentorship %}
+                            <li><a class="text-link" href="https://www.google.com/search?q={{ community | urlencode }}" target="_blank" rel="noopener noreferrer">{{ community }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </article>
+                    {% endfor %}
+                </div>
+                <p class="disclaimer">{{ guidance.basis }}</p>
+            </section>
+            {% endif %}
+            {% endif %}
+
+            {% if not guidance %}
+            <section class="panel" id="career-paths" aria-labelledby="career-title">
+                <div class="panel-heading">
+                    <h2 id="career-title">Plan your next career step</h2>
+                    <p>Run a search to get career ideas, courses, and communities related to your skills and retrieved listings.</p>
+                </div>
+                <a class="text-link" href="https://www.onetonline.org/" target="_blank" rel="noopener noreferrer">Explore the O*NET career database ↗</a>
+            </section>
+            {% endif %}
+
+            <section class="panel" id="sources" aria-labelledby="sources-title">
+                <div class="panel-heading">
+                    <h2 id="sources-title">Job sources we search</h2>
+                    <p>Explore each board directly. Search availability and coverage vary by source.</p>
+                </div>
+                <div class="sources">
+                    <a class="source-card" href="https://remotive.com/remote-jobs" target="_blank" rel="noopener noreferrer"><strong>Remotive ↗</strong><span>Remote-first job listings</span></a>
+                    <a class="source-card" href="https://www.arbeitnow.com/" target="_blank" rel="noopener noreferrer"><strong>Arbeitnow ↗</strong><span>International job board</span></a>
+                    <a class="source-card" href="https://www.usajobs.gov/" target="_blank" rel="noopener noreferrer"><strong>USAJOBS ↗</strong><span>U.S. federal opportunities</span></a>
+                    <a class="source-card" href="https://www.adzuna.com/" target="_blank" rel="noopener noreferrer"><strong>Adzuna ↗</strong><span>Job listings in supported countries</span></a>
+                </div>
+                <p class="disclaimer">Some providers require API credentials configured by the site owner. Results may be partial or stale; confirm details with the original employer. Salaries are shown only when a source provides them.</p>
+            </section>
+        </main>
+    </div>
+    <footer>
+        <div class="wrap footer-row">
+            <span><strong>RoleScout</strong> · A practical companion for your job search.</span>
+            <span>Listings and career guidance are provided as-is; always verify details with the source.</span>
+        </div>
+    </footer>
+</body>
+</html>
